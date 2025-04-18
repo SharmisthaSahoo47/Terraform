@@ -23,3 +23,10 @@ resource "aws_subnet" "prod" {
     vpc_id = aws_vpc.cust_vpc.id
     tags = { Name = "prd"}
 }
+
+resource "aws_subnet" "uat" {
+    cidr_block = "10.0.6.0/24"
+    vpc_id = aws_vpc.cust_vpc.id
+    tags = { Name = "uat"}
+  
+}
