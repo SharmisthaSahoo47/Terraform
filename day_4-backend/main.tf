@@ -18,3 +18,8 @@ resource "aws_subnet" "test" {
     tags = { Name = "test"}
   
 }
+resource "aws_subnet" "prod" {
+    cidr_block = "10.0.15.0/24"
+    vpc_id = aws_vpc.cust_vpc.id
+    tags = { Name = "prd"}
+}
