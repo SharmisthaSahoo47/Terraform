@@ -1,6 +1,8 @@
 #vpc
 resource "aws_vpc" "custVPC" {
   cidr_block = "10.0.0.0/16"
+  enable_dns_support   = true
+  enable_dns_hostnames = true
 }
 #subnet
 resource "aws_subnet" "sub1" {
@@ -41,6 +43,29 @@ resource "aws_route_table_association" "RT2" {
   subnet_id = aws_subnet.sub2.id
   route_table_id = aws_route_table.RT.id
 }
+#SG for rds 
+resource "aws_security_group" "rds_replica_sg" {
+  name        = "rds-replica-sg"
+  description = "Allow access to read replica"
+  vpc_id      = aws_vpc.custVPC.id
+
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Adjust this for your setup
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+
+
 #subnetgroup in default VPC used for primary db
 resource "aws_db_subnet_group" "sub-grp-primary" {
   name = "primary-sub-grp"
@@ -66,6 +91,9 @@ resource "aws_iam_role" "rds_monitoring" {
     }]
   })
 }
+#The role already exist on my end so importing it.
+#terraform import aws_iam_role.rds_monitoring rds-monitoring-role
+
 #attach IAM Role
 resource "aws_iam_role_policy_attachment" "rds_monitoring_attach" {
   
@@ -83,7 +111,7 @@ resource "aws_db_instance" "default" {
   instance_class          = "db.t3.micro"
   username                = "admin"
   password                = "Cloud123"
-  db_subnet_group_name    = aws_db_subnet_group.sub-grp-primary.arn
+  db_subnet_group_name    = aws_db_subnet_group.sub-grp-primary.name
   parameter_group_name    = "default.mysql8.0"
   provider = aws
 
@@ -109,13 +137,11 @@ resource "aws_db_instance" "default" {
 }
 #RDS read replica
 resource "aws_db_instance" "read_replica" {
-  identifier          = "book-rds-replica"
-  replicate_source_db = aws_db_instance.default.arn
-  instance_class      = "db.t3.micro"
-
-  # Network configuration in secondary region
-  db_subnet_group_name = aws_db_subnet_group.sub-grp-secondary.arn
-  publicly_accessible  = true
-
+  identifier            = "book-rds-replica"
+  replicate_source_db   = aws_db_instance.default.arn
+  instance_class        = "db.t3.micro"
+  db_subnet_group_name  = aws_db_subnet_group.sub-grp-secondary.name
+  publicly_accessible   = true
+  vpc_security_group_ids = [aws_security_group.rds_replica_sg.id] 
   depends_on = [aws_db_instance.default]
 }
