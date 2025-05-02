@@ -45,6 +45,17 @@ variable "project_tags" {
 }
 
 #RDS variables
+variable "major_engine_version" {
+  description = "The major version of the database engine."
+  type        = string
+}
+
+variable "family" {
+  description = "The DB parameter group family name."
+  type        = string
+}
+
+
 variable "db_username" {
   description = "Master username for the RDS instance"
   type        = string

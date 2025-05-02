@@ -41,7 +41,8 @@ resource "aws_autoscaling_group" "frontend_asg" {
     version = "$Latest"
   }
 
-  target_group_arns = [module.frontend_alb.target_group_arns[0]]
+  target_group_arns = [aws_lb_target_group.frontend_tg.arn]
+
 
   tag {
     key                 = "Name"
@@ -61,7 +62,8 @@ resource "aws_autoscaling_group" "backend_asg" {
     version = "$Latest"
   }
 
-  target_group_arns = [module.backend_alb.target_group_arns[0]]
+  target_group_arns = [aws_lb_target_group.backend_tg.arn]
+
 
   tag {
     key                 = "Name"
